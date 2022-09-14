@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/rabin-nyaundi/authentication-service/cmd/internal/data"
+
+	_ "github.com/lib/pq"
 )
 
 type jsonResponse struct {
