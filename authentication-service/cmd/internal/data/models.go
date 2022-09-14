@@ -1,7 +1,14 @@
 package data
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+)
 
+// ErrorRecordNotFound returns record not found error
+var (
+	ErrorRecordNotFound = errors.New("record not found")
+)
 
 // Models structs that wraps the models
 type Models struct {

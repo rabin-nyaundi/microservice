@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -37,21 +38,120 @@ type UserModel struct {
 
 // GetAllUsers returns all users from the database
 func (m UserModel) GetAllUsers() ([]*User, error) {
-	return nil, nil
+	query := `
+		SELECT firtsname, lastname, email, active, role, version, created_at, updated_at
+		FROM users ORDER BY lastname`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+
+	var users []*User
+
+	for rows.Next() {
+		var user User
+		err := rows.Scan(
+			&user.FirstName,
+			&user.LastName,
+			&user.Email,
+			&user.Active,
+			&user.Role,
+			&user.Version,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+
+		if err != nil {
+			log.Panic(err)
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	if err = rows.Err(); err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+
+	return users, nil
 }
 
 // GetByEmail returns a single user from the database by email
-func (m UserModel) GetByEmail(email string) ([]*User, error) {
-	return nil, nil
+func (m UserModel) GetByEmail(email string) (*User, error) {
+	query := `
+		SELECT firtsname, lastname, email, active, role, version
+		FROM users
+		WHERE email = $1`
+
+	var user User
+
+	args := []interface{}{email}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Active,
+		&user.Role,
+		&user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case err.Error() == `sql: no rows in result set`:
+			return nil, ErrorRecordNotFound
+		default:
+			fmt.Println(err.Error())
+			return nil, err
+		}
+	}
+	return &user, nil
 }
 
 // GetOneUser returns a single user from the database by id
-func (m UserModel) GetOneUser(id int) ([]*User, error) {
+func (m UserModel) GetOneUser(id int) (*User, error) {
+	query := `
+		SELECT firtsname, lastname, email, active, role, version
+		FROM users
+		WHERE id = $1`
+	var user User
+
+	args := []interface{}{id}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Active,
+		&user.Role,
+		&user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case err.Error() == `sql: no rows in result set`:
+			return nil, ErrorRecordNotFound
+		default:
+			fmt.Println(err.Error())
+			return nil, err
+		}
+	}
+
 	return nil, nil
 }
 
 // Update updates and returns a single user
-func (m UserModel) Update(user User) ([]*User, error) {
+func (m UserModel) Update(user User) (*User, error) {
 	return nil, nil
 }
 
@@ -61,7 +161,7 @@ func (m UserModel) Delete(user User) error {
 }
 
 // Insert returns a single user inserted in to the database
-func (m UserModel) Insert(user *User) ([]*User, error) {
+func (m UserModel) Insert(user *User) (*User, error) {
 	query := `
 		INSERT INTO users (email, firstname, lastname, password_hash, active, role, version, created_at, updated_at)
 		values($1, $2, $3, $4, false, 0, 0, $6, $7)
@@ -85,7 +185,7 @@ func (m UserModel) Insert(user *User) ([]*User, error) {
 		log.Panic(err)
 		return nil, err
 	}
-	return nil, nil
+	return user, nil
 }
 
 // ResetPassword is a method called to change the user's password
