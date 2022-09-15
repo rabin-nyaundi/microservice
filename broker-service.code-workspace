@@ -1,16 +1,19 @@
 {
   "folders": [
-	{
-		"path": "broker-service"
-	},
-	{
-		"path": "frontend"
-	},
-	{
-		"path": "project"
-	},
-	{
-		"path": "authentication-service"
-	}
-]
+    {
+      "path": "broker-service"
+    },
+    {
+      "path": "frontend"
+    },
+    {
+      "path": "project"
+    },
+    {
+      "path": "authentication-service"
+    }
+  ],
+  "settings": {
+    "conventionalCommits.scopes": ["Update User"]
+  }
 }

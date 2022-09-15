@@ -151,8 +151,34 @@ func (m UserModel) GetOneUser(id int) (*User, error) {
 }
 
 // Update updates and returns a single user
-func (m UserModel) Update(user User) (*User, error) {
-	return nil, nil
+func (m UserModel) Update(user *User) error {
+	query := `
+		UPDATE users SET 
+		email = $1, 
+		fristname=$2, 
+		lastname=$3, 
+		version=$4, 
+		updated_at=$5
+		WHERE id=$6`
+
+	args := []interface{}{
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		user.Version + 1,
+		time.Now(),
+		user.ID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Delete returns a single user from the database
