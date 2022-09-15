@@ -9,7 +9,67 @@ services:
     restart: always
     ports:
       - "8080:80"
-
     deploy:
       mode: replicated
       replicas: 1
+
+
+  authentication-service:
+    build:
+      context: ./../authentication-service
+      dockerfile: ./../authentication-service/authentication-service.dockerfile
+    restart: always
+    ports:
+      - "8081:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DATABASE_DSN: "postgresql://db_admin:pass5@word@postgres/users?sslmode=disable"
+      # "host=postgres port=5432 user=db_admin password=pass5@word dbname=users sslmode=disable timezone=uTC connect_timeout=5"
+    # depends_on:
+    #   - migrate
+    networks:
+      - mynetwork
+
+  postgres:
+    image: postgres:14.0
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: "db_admin"
+      POSTGRES_PASSWORD: "pass5@word"
+      POSTGRES_DB: "users"
+
+    networks:
+      - mynetwork
+    # volumes:
+      # - ./db-data/postgres:/var/lib/postgresql/data
+
+
+  migrate:
+    container_name: migrate
+    image: migrate/migrate
+    depends_on:
+      - postgres
+    volumes:
+      - ./../authentication-service/migrations:/auth/migrations
+
+    networks:
+      - mynetwork
+
+    command:
+      [
+        "-path",
+        "/auth/migrations",
+        "-database",
+        "postgresql://db_admin:pass5@word@postgres/users?sslmode=disable",
+        "up"
+      ]
+
+networks:
+  mynetwork:

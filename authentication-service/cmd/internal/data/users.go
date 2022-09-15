@@ -164,7 +164,7 @@ func (m UserModel) Delete(user User) error {
 func (m UserModel) Insert(user *User) (*User, error) {
 	query := `
 		INSERT INTO users (email, firstname, lastname, password_hash, active, role, version, created_at, updated_at)
-		values($1, $2, $3, $4, false, 0, 0, $6, $7)
+		values($1, $2, $3, $4, false, 0, 0, $5, $6)
 		RETURNING id`
 
 	args := []interface{}{
@@ -172,7 +172,6 @@ func (m UserModel) Insert(user *User) (*User, error) {
 		user.FirstName,
 		user.LastName,
 		user.Password.hash,
-		user.Active,
 		time.Now(),
 		time.Now(),
 	}
