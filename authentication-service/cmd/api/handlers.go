@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/rabin-nyaundi/authentication-service/cmd/internal/data"
 )
@@ -36,17 +37,26 @@ func (app *application) createUserHandeler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userCreated, err := app.models.User.Insert(user)
+	_, err = app.models.User.Insert(user)
 	if err != nil {
 		log.Panic(err)
 		return
 	}
+
+	duration := 1 * 24 * time.Hour
+	token, err := app.models.Token.New(user.ID, duration, data.ScopeActivation)
+
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+
 	err = app.writeJSON(w, http.StatusCreated,
 		jsonResponse{
 			Error:   false,
 			Success: true,
 			Message: "user creation success",
-			Data:    userCreated,
+			Data:    token,
 		})
 
 	if err != nil {

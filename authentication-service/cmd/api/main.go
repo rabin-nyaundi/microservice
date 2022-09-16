@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/rabin-nyaundi/authentication-service/cmd/internal/data"
+
+	_ "github.com/lib/pq"
 )
 
 type jsonResponse struct {
@@ -60,18 +62,21 @@ func main() {
 		config: cfg,
 		models: data.NewModel(db),
 	}
-
+	
+	log.Printf("Starting server at port:%d", cfg.port)
 	svr := &http.Server{
 		Addr:    fmt.Sprintf(":%d", app.config.port),
 		Handler: app.routes(),
 	}
-
+	
 	err = svr.ListenAndServe()
-
+	
 	if err != nil {
 		log.Panic(err)
 		return
 	}
+	
+	log.Printf("server started at port:%d", cfg.port)
 }
 
 func OpenDB(cfg Config) (*sql.DB, error) {
