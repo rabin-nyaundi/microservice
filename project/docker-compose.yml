@@ -1,4 +1,4 @@
-version: '3'
+version: '3.1'
 
 services:
 
@@ -12,7 +12,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-
+    networks:
+      - mynet
 
   authentication-service:
     build:
@@ -25,17 +26,15 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      DATABASE_DSN: "postgresql://db_admin:pass5@word@postgres/users?sslmode=disable"
+      DATABASE_DSN: "postgresql://db_admin:pass5@word@postgres:5432/users?sslmode=disable"
       # "host=postgres port=5432 user=db_admin password=pass5@word dbname=users sslmode=disable timezone=uTC connect_timeout=5"
-    # depends_on:
-    #   - migrate
     networks:
-      - mynetwork
+      - mynet
 
   postgres:
     image: postgres:14.0
-    ports:
-      - "5432:5432"
+    networks:
+      - mynet
     restart: always
     deploy:
       mode: replicated
@@ -44,32 +43,42 @@ services:
       POSTGRES_USER: "db_admin"
       POSTGRES_PASSWORD: "pass5@word"
       POSTGRES_DB: "users"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-data/postgres:/var/lib/postgresql/data
 
-    networks:
-      - mynetwork
-    # volumes:
-      # - ./db-data/postgres:/var/lib/postgresql/data
-
+  adminer:
+    image: dockette/adminer:full-php5
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: pgsql
+      ADMINER_DEFAULT_DB_HOST: postgres
+      ADMINER_DEFAULT_DB_NAME: users
+    ports:
+      - 8090:8080
 
   migrate:
     container_name: migrate
     image: migrate/migrate
-    depends_on:
-      - postgres
-    volumes:
-      - ./../authentication-service/migrations:/auth/migrations
-
     networks:
-      - mynetwork
+      - mynet
+    volumes:
+      - ./../authentication-service/migrations:/migrations
 
     command:
       [
         "-path",
-        "/auth/migrations",
+        "/migrations",
         "-database",
-        "postgresql://db_admin:pass5@word@postgres/users?sslmode=disable",
+        "postgresql://db_admin:pass5@word@postgres:5432/users?sslmode=disable",
         "up"
       ]
+    depends_on:
+      - postgres
+    restart: "on-failure"
 
 networks:
-  mynetwork:
+  mynet:

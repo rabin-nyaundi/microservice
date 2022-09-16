@@ -1,9 +1,11 @@
+CREATE EXTENSION citext;
+
 
 CREATE TABLE IF NOT EXISTS users(
     id BIGSERIAL PRIMARY KEY,
     firstname TEXT NOT NULL,
     lastname TEXT NOT NULL,
-    email VARCHAR UNIQUE NOT NULL,
+    email citext NOT NULL,
     password_hash bytea NOT NULL,
     active BOOLEAN NOT NULL,
     role INTEGER,

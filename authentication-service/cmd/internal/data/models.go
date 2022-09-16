@@ -12,12 +12,14 @@ var (
 
 // Models structs that wraps the models
 type Models struct {
-	User UserModel
+	User  UserModel
+	Token TokenModel
 }
 
 // NewModel returns models struct with initialized models
 func NewModel(db *sql.DB) Models {
 	return Models{
-		User: UserModel{DB: db},
+		User:  UserModel{DB: db},
+		Token: TokenModel{DB: db},
 	}
 }
