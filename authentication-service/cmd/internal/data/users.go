@@ -183,6 +183,23 @@ func (m UserModel) Update(user *User) error {
 
 // Delete returns a single user from the database
 func (m UserModel) Delete(user User) error {
+	query := `
+	DELETE * FROM users
+	WHERE id = $1`
+
+	args := []interface{}{
+		user.ID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		log.Panic(err)
+		return err
+	}
+
 	return nil
 }
 

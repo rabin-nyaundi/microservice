@@ -65,3 +65,8 @@ func (app *application) createUserHandeler(w http.ResponseWriter, r *http.Reques
 	}
 
 }
+
+
+func (app *application) fetch() {
+	
+}

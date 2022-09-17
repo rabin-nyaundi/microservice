@@ -48,17 +48,6 @@ services:
     volumes:
       - ./db-data/postgres:/var/lib/postgresql/data
 
-  adminer:
-    image: dockette/adminer:full-php5
-    restart: always
-    depends_on:
-      - postgres
-    environment:
-      ADMINER_DEFAULT_DB_DRIVER: pgsql
-      ADMINER_DEFAULT_DB_HOST: postgres
-      ADMINER_DEFAULT_DB_NAME: users
-    ports:
-      - 8090:8080
 
   migrate:
     container_name: migrate
