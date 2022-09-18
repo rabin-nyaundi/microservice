@@ -31,6 +31,9 @@ services:
     networks:
       - mynet
 
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:14.0
     networks:
@@ -47,7 +50,6 @@ services:
       - "5432:5432"
     volumes:
       - ./db-data/postgres:/var/lib/postgresql/data
-
 
   migrate:
     container_name: migrate

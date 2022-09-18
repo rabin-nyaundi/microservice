@@ -7,8 +7,28 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
+
+// JSONResponse structure holds response sent to a clint
+
+// readIDParams returns the id from the get request
+func (app *application) readIDParams(w http.ResponseWriter, r *http.Request) (int64, error) {
+	userID := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(userID, 10, 12)
+
+	if err != nil {
+		log.Panic(err)
+		return 0, err
+	}
+
+	fmt.Println(r.URL)
+	return id, nil
+
+}
 
 // writeJSON converts data provided to jon format
 func (app *application) writeJSON(w http.ResponseWriter, status int, data any) error {
@@ -77,6 +97,21 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, data an
 	if err != io.EOF {
 		return fmt.Errorf("body must contain a single JSON object")
 	}
-	
+
 	return nil
+}
+
+func (app *application) JSONEror(w http.ResponseWriter, err error, status ...int) error {
+	statusCode := http.StatusBadRequest
+
+	if len(status) > 0 {
+		statusCode = status[0]
+	}
+
+	var payload JSONResponse
+	payload.Error = true
+	payload.Message = err.Error()
+
+	return app.writeJSON(w, statusCode, payload)
+
 }
