@@ -101,7 +101,7 @@ func (app *application) authenticateHandler(w http.ResponseWriter, r *http.Reque
 	valid, err := user.Password.MatchesPassword(input.Password)
 
 	if err != nil || !valid {
-		app.JSONEror(w, err, http.StatusBadRequest)
+		app.JSONEror(w, err, http.StatusUnauthorized)
 		return
 	}
 
