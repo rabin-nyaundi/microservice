@@ -11,6 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var (
+	DuplicateEmail = errors.New("duplicate email found")
+)
+
 // User is the structure that holds a user from the database
 type User struct {
 	ID        int64     `json:"id"`
@@ -83,7 +87,7 @@ func (m UserModel) GetAllUsers() ([]*User, error) {
 // GetByEmail returns a single user from the database by email
 func (m UserModel) GetByEmail(email string) (*User, error) {
 	query := `
-		SELECT firtsname, lastname, email, active, role, version
+		SELECT id, firstname, lastname, email, password_hash, active, role, version
 		FROM users
 		WHERE email = $1`
 
@@ -95,9 +99,11 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	defer cancel()
 
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
+		&user.Password.hash,
 		&user.Active,
 		&user.Role,
 		&user.Version,
@@ -118,9 +124,10 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 // GetOneUser returns a single user from the database by id
 func (m UserModel) GetOneUser(id int) (*User, error) {
 	query := `
-		SELECT firtsname, lastname, email, active, role, version
+		SELECT firstname, lastname, email, active, role, version
 		FROM users
 		WHERE id = $1`
+
 	var user User
 
 	args := []interface{}{id}
@@ -147,7 +154,7 @@ func (m UserModel) GetOneUser(id int) (*User, error) {
 		}
 	}
 
-	return nil, nil
+	return &user, nil
 }
 
 // Update updates and returns a single user
@@ -183,11 +190,28 @@ func (m UserModel) Update(user *User) error {
 
 // Delete returns a single user from the database
 func (m UserModel) Delete(user User) error {
+	query := `
+	DELETE * FROM users
+	WHERE id = $1`
+
+	args := []interface{}{
+		user.ID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		log.Panic(err)
+		return err
+	}
+
 	return nil
 }
 
 // Insert returns a single user inserted in to the database
-func (m UserModel) Insert(user *User) (*User, error) {
+func (m UserModel) Insert(user *User) error {
 	query := `
 		INSERT INTO users (email, firstname, lastname, password_hash, active, role, version, created_at, updated_at)
 		values($1, $2, $3, $4, false, 0, 0, $5, $6)
@@ -207,10 +231,16 @@ func (m UserModel) Insert(user *User) (*User, error) {
 
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.ID)
 	if err != nil {
+		switch {
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+			return DuplicateEmail
+		default:
+			log.Panic(err)
+		}
 		log.Panic(err)
-		return nil, err
+		return err
 	}
-	return user, nil
+	return nil
 }
 
 // ResetPassword is a method called to change the user's password

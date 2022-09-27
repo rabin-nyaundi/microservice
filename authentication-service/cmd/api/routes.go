@@ -19,5 +19,7 @@ func (app *application) routes() http.Handler {
 		MaxAge:           300,
 	}))
 	mux.Post("/v1/users", app.createUserHandeler)
+	mux.Get("/v1/users/{id}", app.fetchUserHandler)
+	mux.Post("/v1/users/authenticate", app.authenticateHandler)
 	return mux
 }

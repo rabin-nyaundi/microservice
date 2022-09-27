@@ -10,14 +10,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/rabin-nyaundi/authentication-service/cmd/internal/data"
+	"github.com/rabin-nyaundi/authentication-service/internal/data"
 
 	_ "github.com/lib/pq"
 )
 
-type jsonResponse struct {
-	Error   bool        `json:"error"`
-	Success bool        `json:"success"`
+type JSONResponse struct {
+	Error   bool        `json:"error,omitempty"`
+	Success bool        `json:"success,omitempty"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
@@ -62,20 +62,20 @@ func main() {
 		config: cfg,
 		models: data.NewModel(db),
 	}
-	
+
 	log.Printf("Starting server at port:%d", cfg.port)
 	svr := &http.Server{
 		Addr:    fmt.Sprintf(":%d", app.config.port),
 		Handler: app.routes(),
 	}
-	
+
 	err = svr.ListenAndServe()
-	
+
 	if err != nil {
 		log.Panic(err)
 		return
 	}
-	
+
 	log.Printf("server started at port:%d", cfg.port)
 }
 
